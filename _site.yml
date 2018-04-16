@@ -2,19 +2,18 @@
 name: "Simulation"
 output_dir: "docs"
 navbar:
-  title: "Cars"
+  title: "Simulation"
   left:
   - text: "Home"
    href: index.html
-  - text: "Question-01"
-   href: Question-01.html
+  - text: "About"
+   href: about.html
 output:
-  md_document:
   html_document:
  theme: cosmo
  theme: cosmo
     highlight: textmate
     include:
-      after_body: footer.html
+    after_body: footer.html
     css: styles.css
 ---
