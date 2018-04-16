@@ -5,6 +5,6 @@
   
   - 這是一個數學算式
   
-  $\sum_{i=1}^{n} U_i > 1$
+  $$\sum_{i=1}^{n}U_i>1$$
 
   - 這是一個網頁可以點選  [https://rmarkdown.rstudio.com/rmarkdown_websites.html]
