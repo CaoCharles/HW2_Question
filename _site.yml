@@ -9,6 +9,7 @@ navbar:
   - text: "Question-01"
    href: Question-01.html
 output:
+  md_document:
   html_document:
  theme: cosmo
  theme: cosmo
