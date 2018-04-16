@@ -4,6 +4,8 @@ output_dir: "docs"
 navbar:
   title: "Simulation"
   left:
+  - text: "README"
+   href: README.html
   - text: "Home"
    href: index.html
   - text: "About"
