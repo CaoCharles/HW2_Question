@@ -1,21 +1,17 @@
 ---
-name: "Question01"
-output_dir: "docs"
+name: "my-website"
 navbar:
-  title: "Question01"
+  title: "My Website"
   left:
-  - text: "README"
-   href: README.html
-  - text: "Home"
-   href: index.html
-  - text: "About"
-   href: about.html
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html
 output:
   html_document:
- theme: cosmo
- theme: cosmo
+    theme: cosmo
     highlight: textmate
     include:
-    after_body: footer.html
+      after_body: footer.html
     css: styles.css
 ---
