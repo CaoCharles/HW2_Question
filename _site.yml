@@ -6,5 +6,5 @@ navbar:
     - text: "Home"
       href: index.html
     - text: "About"
-      href: about.html[https://caocharles.github.io/HW2_Question-01/about.html]
+      href: about.html <https://caocharles.github.io/HW2_Question-01/about.html>
 ---
