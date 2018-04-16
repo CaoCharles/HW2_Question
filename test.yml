@@ -1,6 +1,14 @@
 ---
-title: "Something fascinating"
-author: "Jenny Bryan"
-date: "`r format(Sys.Date())`"
-output: github_document
+name: "Simulation"
+output_dir: "docs"
+navbar:
+  title: "Cars"
+  left:
+  - text: "Home"
+   href: index.html
+  - text: "Question-01"
+   href: Question-01.html
+output:
+  html_document:
+ theme: cosmo
 ---
