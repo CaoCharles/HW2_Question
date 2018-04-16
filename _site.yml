@@ -4,7 +4,9 @@ navbar:
   title: "My Website"
   left:
     - text: "Home"
+      icon: fa-home
       href: index.html
     - text: "About"
-      href: about.html 
+      icon: fa-info
+      href: about.html
 ---
