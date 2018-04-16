@@ -1,5 +1,5 @@
 ---
-title: "Question 01"
+title: "Question01"
 output: 
   html_document:
     keep_md: true

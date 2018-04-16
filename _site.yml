@@ -1,8 +1,8 @@
 ---
-name: "Simulation"
+name: "Question01"
 output_dir: "docs"
 navbar:
-  title: "Simulation"
+  title: "Question01"
   left:
   - text: "README"
    href: README.html
