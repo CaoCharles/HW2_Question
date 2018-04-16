@@ -1,5 +1,57 @@
 ---
-title: "About This Website"
+title: "Question02"
 ---
 
-More about this website.
+```{r message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(kableExtra)
+library(knitr)
+# 設定存檔位址
+#setwd("/Users/kevinpiger/Desktop/碩一下/統模/Homework02/")
+```
+
+# Question 02
+You think you know baseball? Do home run hitters have the highest batting averages? Think about this hypothesis, then analyze the following experience based on a half season with the Braves:
+
+|     stats      |    |    |    |    |    |    |    |
+| :------------: |:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Batting Average|.252|.305|.299|.303|.285|.191|.283|
+| Home Runs      |12  |6   |4   |15  |2   | 2  | 16 |
+| Batting Average|.272|.310|.266|.215|.211|.244|.320|
+| Home Runs      |  6 |  8 |  10|  0 |   3|   6|   7|
+
+```{r}
+# Question 02 #
+x <- c(0.252,0.305,0.299,0.303,0.285,0.191,0.28,0.272,0.310,0.266,0.215,0.211,0.244,0.320)
+y <- c(12,6,4,15,2,2,16,6,8,10,0,3,6,7)
+```
+
+<center> $H_0:$ 打擊率與全壘打無關 </center>
+<center> $H_1:$ 打擊率與全壘打有關 </center>
+<center> num 為模擬次數, $\alpha$ = 0.05 </center>
+```{r}
+alpha = 0.05
+num = 100000
+N = NULL
+for(i in 1:num){
+x1 <- sample(x,14,F) 
+y1 <- sample(y,14,F) 
+N <- c(N, sum((y1-mean(y))/sd(y)-(x1-mean(x))/sd(x)))}
+t0 <- sum(((y-mean(y))/sd(y))-((x-mean(x))/sd(x)))
+N1 <- data.frame("BatXHit" = N) %>% mutate(over = ifelse(BatXHit >=t0,  ">= critical value","< critical value"))
+N1$over <- N1$over %>% as.factor()
+ggplot(N1,aes(x = BatXHit,fill = over))+
+  geom_histogram(bins = 100,alpha = 0.7)+
+  scale_fill_manual(values = c("skyblue","blue"),
+                    name = paste0("Label\n","k = ",t0),
+                    breaks = c(">= critical value","< critical value k"),
+                    labels = c(">= critical value","< critical value k"))+
+  theme(plot.title = element_text(colour = "black", face = "bold", size = 25))+
+  geom_vline(aes(xintercept = t0),linetype="dashed",color = "red")+
+  labs(title = "Randomization ",x = "Simulation of BatXHit", y = "Count")+
+  scale_x_continuous(breaks = c(t0,0),
+                     labels = c("k",0))
+pv <- sum(N > t0 )/num
+print(ifelse(pv > alpha, paste('p value',pv,'>',alpha,'Do not reject H0'),paste('p value',pv,'<=',alpha,'Reject H0')))
+```
