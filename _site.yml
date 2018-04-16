@@ -7,11 +7,4 @@ navbar:
       href: index.html
     - text: "About"
       href: about.html[https://caocharles.github.io/HW2_Question-01/about.html]
-output:
-  html_document:
-    theme: cosmo
-    highlight: textmate
-    include:
-      after_body: footer.html
-    css: styles.css
 ---
