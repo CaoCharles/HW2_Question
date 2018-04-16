@@ -1,6 +1,8 @@
 ---
 title: "Question 01"
-output: github_document
+output: 
+  html_document:
+    keep_md: true
 ---
 ```{r message = FALSE}
 library(ggplot2)
@@ -56,6 +58,6 @@ kable(output,"html") %>%
 ## (b) 
 Compute the density function of N, E(N), and Var(N).
 
->>E(N) = e
+>E(N) = e
 
->>Var(N) = 3e-e^2
+>Var(N) = 3e-e^2
