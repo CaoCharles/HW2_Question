@@ -1,0 +1,490 @@
+---
+title: "Simulation HW2"
+author: "CaoCharles"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 3
+    toc_float:
+      collapsed: TRUE
+      smooth_scroll: FALSE
+---
+```{r message = FALSE}
+library(foreach)
+library(doSNOW)
+library(bootstrap)
+library(ggplot2)
+library(dplyr)
+library(kableExtra)
+library(knitr)
+options(scipen = 999)
+```
+
+#Question 01
+
+For uniform$(0,1)$ random variables $U_1,U_2,...,$ define $N=min\left\{n:{\sum_{i=1}^{n}U_i}>1\right\}$
+
+That is,$N$ is the number of random numbers that must be asummed to exeed 1.
+
+##(a)
+&emsp;Estimate E(N) with standard errors by generating 1,000, 2,000, 5,000, 10,000, and 100,000 values of $N$, and check if there are any patterns in the estimate and its s.e.
+
+```{r}
+# T 欲模擬次數 #
+Q1 <- function(T){
+N = NULL
+S = NULL
+for( i in 1:T){
+  n = 0; i = 0
+  while(n < 1){
+    n = sum(n ,runif(1))
+    i = i + 1}
+    N <- c(N,i)
+    }
+  return(N)
+}
+```
+
+Calculation and output
+```{r}
+output <- NULL
+output2 <- NULL
+sim <- c(1000, 2000, 5000, 10000, 100000)
+for(i in 1:5){
+  output[i] <- mean(Q1(sim[i]));
+  output2[i] <- var(Q1(sim[i]))
+}
+output <- t(output)
+output2 <- t(output2)
+output <- rbind(output,output2)
+rownames(output) <- c("Output","var")
+colnames(output) <- sim
+kable(output,"html") %>% 
+  kable_styling(bootstrap_options = 'striped', full_width = F) %>% 
+  add_header_above(c(" " = 1, "# of Simulation" = 5))
+```
+
+##(b)
+&emsp;Compute the density function of $N$, $E(N)$, and $Var(N)$.
+
+>E(N) = e
+
+>Var(N) = 3e-e^2
+
+#Question 02
+
+You think you know baseball? Do home run hitters have the highest batting averages? Think about this hypothesis, then analyze the following experience based on a half season with the Braves:
+ 
+|     stats      |    |    |    |    |    |    |    |
+| :------------: |:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Batting Average|.252|.305|.299|.303|.285|.191|.283|
+| Home Runs      |12  |6   |4   |15  |2   | 2  | 16 |
+| Batting Average|.272|.310|.266|.215|.211|.244|.320|
+| Home Runs      |  6 |  8 |  10|  0 |   3|   6|   7|
+
+```{r}
+# Question 02 #
+x <- c(0.252,0.305,0.299,0.303,0.285,0.191,0.28,0.272,0.310,0.266,0.215,0.211,0.244,0.320)
+y <- c(12,6,4,15,2,2,16,6,8,10,0,3,6,7)
+```
+
+<center> $H_0:$ 打擊率與全壘打無關 </center>
+<center> $H_1:$ 打擊率與全壘打有關 </center>
+<center> num 為模擬次數, $\alpha$ = 0.05 </center>
+```{r}
+alpha = 0.05
+num = 100000
+N = NULL
+for(i in 1:num){
+x1 <- sample(x,14,F) 
+y1 <- sample(y,14,F) 
+N <- c(N, sum((y1-mean(y))/sd(y)-(x1-mean(x))/sd(x)))}
+t0 <- sum(((y-mean(y))/sd(y))-((x-mean(x))/sd(x)))
+N1 <- data.frame("BatXHit" = N) %>% mutate(over = ifelse(BatXHit >=t0,  ">= critical value","< critical value"))
+N1$over <- N1$over %>% as.factor()
+ggplot(N1,aes(x = BatXHit,fill = over))+
+  geom_histogram(bins = 100,alpha = 0.7)+
+  scale_fill_manual(values = c("skyblue","blue"),
+                    name = paste0("Label\n","k = ",t0),
+                    breaks = c(">= critical value","< critical value k"),
+                    labels = c(">= critical value","< critical value k"))+
+  theme(plot.title = element_text(colour = "black", face = "bold", size = 25))+
+  geom_vline(aes(xintercept = t0),linetype="dashed",color = "red")+
+  labs(title = "Randomization ",x = "Simulation of BatXHit", y = "Count")+
+  scale_x_continuous(breaks = c(t0,0),
+                     labels = c("k",0))
+pv <- sum(N > t0 )/num
+print(ifelse(pv > alpha, paste('p value',pv,'>',alpha,'Do not reject H0'),paste('p value',pv,'<=',alpha,'Reject H0')))
+```
+
+#Question 03
+
+Similar to what Efron did in the Law school data example, compute the bootstrap simulation for 50,100,...,10,000 replications. But, instead of using the original 15 observations, we want to know if the number of observations plays an important role. Randomly select 10, 15, 20, and 25 observations and then see if the bootstrap variance converges as the number of replications increases. (Note: You also need to compare your results with that of population.)
+
+Read data
+```{r message=FALSE}
+data = law82
+data %>% kable(.,"html") %>% kable_styling() %>% scroll_box(height = "200px")
+cor(data$LSAT,data$GPA)
+```
+
+## bootstrap correlatoin 
+
+```{r}
+# design function
+Q3 <- function(num,Sim_num,rep_num){
+  Sim_cor = NULL
+  for(i in 1:rep_num){
+    temp1 <- sample(num,Sim_num,T)
+    temp <- data[temp1,2:3] %>% cor()
+    Sim_cor <- c(Sim_cor,temp[1,2])}
+  return(c(mean(Sim_cor),var(Sim_cor)))}
+```
+
+### observation = 10
+```{r}
+set.seed(106354012)
+Sim_num = 10
+num <- sample(1:82,Sim_num ,F)
+
+A = NULL;B = NULL
+for( i in c(seq(50,10000,by = 50))){
+  A <- c(A,Q3(num,Sim_num,i)[2])
+  B <- c(B,Q3(num,Sim_num,i)[1])}
+# mean variance of correlation #
+mean(A)
+# mean correlation #
+mean(B)
+temp <- data.frame(num = c(1:200),boots_var = A)
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_var)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_var)) +
+  labs(title="Bootstrap of variance with 10 Observarion ",
+       x="Index",
+       y="Variance of correlation") +
+  theme_bw() 
+
+temp <- data.frame(num = c(1:200),boots_mean = B)
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_mean)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_mean)) +
+  labs(title="Bootstrap of mean with 10 Observarion  ",
+       x="Index",
+       y="Mean of correlation") +
+  theme_bw() 
+```
+
+### observation = 15
+```{r}
+set.seed(106354012)
+Sim_num = 15
+num <- sample(1:82,Sim_num ,F)
+
+A = NULL;B = NULL
+for( i in c(seq(50,10000,by = 50))){
+  A <- c(A,Q3(num,Sim_num,i)[2])
+  B <- c(B,Q3(num,Sim_num,i)[1])}
+# mean variance of correlation #
+mean(A)
+# mean correlation #
+mean(B)
+temp <- data.frame(num = c(1:200),boots_var = A)
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_var)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_var)) +
+  labs(title="Bootstrap of variance with 15 Observarion ",
+       x="Index",
+       y="Variance of correlation") +
+  theme_bw() 
+
+temp <- data.frame(num = c(1:200),boots_mean = B)
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_mean)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_mean)) +
+  labs(title="Bootstrap of mean with 15 Observarion ",
+       x="Index",
+       y="Mean of correlation") +
+  theme_bw() 
+
+```
+
+### observation = 20
+```{r}
+set.seed(106354012)
+Sim_num = 20
+num <- sample(1:82,Sim_num ,F)
+
+A = NULL;B = NULL
+for( i in c(seq(50,10000,by = 50))){
+  A <- c(A,Q3(num,Sim_num,i)[2])
+  B <- c(B,Q3(num,Sim_num,i)[1])}
+# mean variance of correlation #
+mean(A)
+# mean correlation #
+mean(B)
+temp <- data.frame(num = c(1:200),boots_var = A)
+
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_var)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_var)) +
+  labs(title="Bootstrap of variance with 20 Observarion ",
+       x="Index",
+       y="Variance of correlation") +
+  theme_bw() 
+
+temp <- data.frame(num = c(1:200),boots_mean = B)
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_mean)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_mean)) +
+  labs(title="Bootstrap of mean with 20 Observarion ",
+       x="Index",
+       y="Mean of correlation") +
+  theme_bw() 
+
+```
+
+### observation = 25
+```{r}
+set.seed(106354012)
+Sim_num = 25
+num <- sample(1:82,Sim_num ,F)
+
+A = NULL;B = NULL
+for( i in c(seq(50,10000,by = 50))){
+  A <- c(A,Q3(num,Sim_num,i)[2])
+  B <- c(B,Q3(num,Sim_num,i)[1])}
+# mean variance of correlation #
+mean(A)
+# mean correlation #
+mean(B)
+temp <- data.frame(num = c(1:200),boots_var = A)
+
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_var)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_var)) +
+  labs(title="Bootstrap of variance with 25 Observarion ",
+       x="Index",
+       y="Variance of correlation") +
+  theme_bw() 
+
+temp <- data.frame(num = c(1:200),boots_mean = B)
+ggplot(temp) + 
+  geom_point(aes(x = temp$num, y = temp$boots_mean)) +
+  geom_smooth(aes(x = temp$num, y = temp$boots_mean)) +
+  labs(title="Bootstrap of mean with 25 Observarion ",
+       x="Index",
+       y="Mean of correlation") +
+  theme_bw() 
+```
+
+#Question 04
+The block bootstrap can be used in prediction for dependent data. Use the built-in data sunspot.year in R, which is can be modeled as an AR(2) model, compare the difference of prediction via block bootstrap and AR(2) model. As a check, you can leave the final 10 observations as testing data.
+
+
+```{r}
+data <- sunspot.year
+# 顯示不好，需要再討論 #
+head(data)
+```
+
+使用前279筆資料去做訓練data, 後10筆資料為驗證data
+```{r}
+train_data <- data[1:279]
+test_data <- data[280:289]
+```
+
+## Block bootstrap
+```{r}
+temp <- matrix(0,1000,ncol = 10)
+dr <- train_data[-1] - train_data[-279]
+for(i in 1:1000){
+st <- sample(1:269,1)
+temp[i,] <- dr[c(st:(st+9))]}
+xx <- apply(temp,2,median)
+by = NULL
+for(i in 1:10){
+by <- c(by,sum(xx[c(1:i)]) + train_data[279])}
+
+# 預測結果 #
+by
+
+# 繪圖比較 #
+temp = data.frame(num = 1:10,test=test_data, sim = by)
+ggplot(temp)+
+  geom_line(aes(x = num, y = test))+
+  geom_line(aes(x = num, y = sim), linetype = "dotdash")+
+  labs(title="Prediction by Block Bootstrap",x="Year", y = "Quantity")
+
+# test
+abs(test_data-by) %>% sum()
+```
+
+## AR(2)
+```{r}
+# 求取AR(2)的參數 method = mle#
+sunspot.ar <- ar(train_data,order.max = 2,method = "mle")
+sunspot.ar
+# 運用預測function去預測, n.head為預測10期 #
+temp1 <- predict(sunspot.ar, n.ahead = 10)
+
+# 預測結果 #
+temp1$pred
+
+# 繪圖比較 #
+temp = data.frame(num = 1:10,test=test_data, sim = temp1$pred)
+ggplot(temp)+
+  geom_line(aes(x = num, y = test))+
+  geom_line(aes(x = num, y = sim), linetype = 2 )+
+  labs(title="Prediction by AR",x="Year", y = "Quantity")
+
+# test#
+sum(abs(temp1$pred - test_data))
+```
+
+#Question 05
+
+If d is the minimum distance between any pair of n uniformly distributed points from a unit square, then $n(n-1)d^2\sim Exp(\frac{2}{\pi})$ provided that n is sufficiently large. Using R to check this result: First, write a function to produce n points uniformly distributed from the unit square. Then, write a function to calculate the smallest distance between any pair of n points. Change the value of n, perform simulation, and comment on what you find.
+
+## Function design
+```{r}
+sim <- function(num){
+  x <- runif(num) # 模擬num筆x座標
+  y <- runif(num) # 模擬num筆y座標
+  d = NULL
+  while(length(x) > 1){
+    a = (x[-1] - x[1])^2 
+    b = (y[-1] - y[1])^2
+    d = min(c(d,a+b)) 
+    x <- x[-1]
+    y <- y[-1]}
+  return(d * num * (num - 1))}
+```
+
+使用分散式運算
+開通道
+```{r}
+cl<-makeCluster(3) #要開啟3個核心
+registerDoSNOW(cl) #註冊後才真正開啟
+```
+
+## N = 20
+```{r warning=FALSE}
+#在單位正方形亂數生成座標
+A <- cbind(runif(20,0,1),runif(20,0,1))
+A <- as.data.frame(A)
+ggplot(A,aes(x=A[,1],y=A[,2]))+
+  geom_point()+
+  labs(x="",y="",title="單位矩形內亂數生成座標")
+#重複模擬計算任兩點最小值
+set.seed(123)
+o= Sys.time()
+pv <- NULL
+N = 20
+n=100
+d=1000
+for(j in 1:n){
+sim2 <- foreach(i=1:d,.combine = cbind,.export ="sim")%dopar%{sim(N)}
+# ks.test 
+f <- ks.test(sim2, "pexp",pi/2)
+pv[j] <- f$p.value}
+mean(pv)
+sum((pv>0.05)*1)/100
+pv <- as.data.frame(pv)
+ggplot(pv,aes(y=pv))+
+  geom_point(aes(x = 1:100))+
+  geom_hline(yintercept=0.05,color="red")+
+  labs(x="",y="P_value",title="Simulation of P with 100 times ")
+exp <- rexp(n*d,pi/2)
+hist(sim2)
+sim2 <- as.numeric(sim2)%>% as.data.frame()
+ggplot(sim2,aes(sim2)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.2)
+hist(exp, main = "Data from Exponential(pi/2)")
+exp <- as.data.frame(exp)
+ggplot(exp,aes(exp))+
+geom_histogram(aes(y=..density..),fill="skyblue",binwidth = 0.2)
+Sys.time()-o
+```
+
+## N = 100
+```{r warning=FALSE}
+#在單位正方形亂數生成座標
+A <- cbind(runif(100,0,1),runif(100,0,1))
+A <- as.data.frame(A)
+ggplot(A,aes(x=A[,1],y=A[,2]))+
+  geom_point()+
+  labs(x="",y="",title="單位矩形內亂數生成座標")
+#重複模擬計算任兩點最小值
+set.seed(123)
+o= Sys.time()
+pv <- NULL
+N = 100
+n=100
+d=1000
+for(j in 1:n){
+sim2 <- foreach(i=1:d,.combine = cbind,.export ="sim")%dopar%{sim(N)}
+# ks.test 
+f <- ks.test(sim2, "pexp",pi/2)
+pv[j] <- f$p.value}
+mean(pv)
+sum((pv>0.05)*1)/100
+pv <- as.data.frame(pv)
+ggplot(pv,aes(y=pv))+
+  geom_point(aes(x = 1:100))+
+  geom_hline(yintercept=0.05,color="red")+
+  labs(x="",y="P_value",title="Simulation of P with 100 times ")
+exp <- rexp(n*d,pi/2)
+hist(sim2)
+sim2 <- as.numeric(sim2)%>% as.data.frame()
+ggplot(sim2,aes(sim2)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.2)
+hist(exp, main = "Data from Exponential(pi/2)")
+exp <- as.data.frame(exp)
+ggplot(exp,aes(exp))+
+geom_histogram(aes(y=..density..),fill="skyblue",binwidth = 0.2)
+Sys.time()-o
+```
+
+## N = 1000
+```{r warning=FALSE}
+#在單位正方形亂數生成座標
+A <- cbind(runif(1000,0,1),runif(1000,0,1))
+A <- as.data.frame(A)
+ggplot(A,aes(x=A[,1],y=A[,2]))+
+  geom_point()+
+  labs(x="",y="",title="單位矩形內亂數生成座標")
+#重複模擬計算任兩點最小值
+set.seed(123)
+o= Sys.time()
+pv <- NULL
+N = 1000
+n=100
+d=1000
+for(j in 1:n){
+sim2 <- foreach(i=1:d,.combine = cbind,.export ="sim")%dopar%{sim(N)}
+# ks.test 
+f <- ks.test(sim2, "pexp",pi/2)
+pv[j] <- f$p.value}
+mean(pv)
+sum((pv>0.05)*1)/100
+pv <- as.data.frame(pv)
+ggplot(pv,aes(y=pv))+
+  geom_point(aes(x = 1:100))+
+  geom_hline(yintercept=0.05,color="red")+
+  labs(x="",y="P_value",title="Simulation of P with 100 times ")
+exp <- rexp(n*d,pi/2)
+hist(sim2)
+sim2 <- as.numeric(sim2)%>% as.data.frame()
+ggplot(sim2,aes(sim2)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.2)
+hist(exp, main = "Data from Exponential(pi/2)")
+exp <- as.data.frame(exp)
+ggplot(exp,aes(exp))+
+geom_histogram(aes(y=..density..),fill="skyblue",binwidth = 0.2)
+Sys.time()-o
+```
+
+關通道
+```{r}
+stopCluster(cl)
+```
